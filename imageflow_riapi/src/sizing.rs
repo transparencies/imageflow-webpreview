@@ -278,7 +278,7 @@ pub struct Layout {
     image: AspectRatio,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum LayoutError {
     NotImplemented,
     InvalidDimensions {
@@ -300,6 +300,8 @@ pub enum LayoutError {
     },
     /// The result depends on the bitmap contents, and can't be calculated based on input size alone
     ContentDependent,
+    /// The URL or query string could not be parsed
+    InvalidUrl(String),
 }
 
 pub type Result<T> = ::std::result::Result<T, LayoutError>;

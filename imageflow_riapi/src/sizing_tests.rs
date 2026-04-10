@@ -518,7 +518,7 @@ enum SimplifiedExpect {
     Source { against: AspectRatio, expect: Cond },
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct EvaluationContext {
     result: sizing::Result<Layout>,
     target: AspectRatio,
@@ -526,7 +526,7 @@ struct EvaluationContext {
 }
 impl EvaluationContext {
     fn to_compact(&self) -> String {
-        if let Ok(l) = self.result {
+        if let Ok(l) = &self.result {
             format!(
                 "target: {:?}, source: {:?}, canvas: {:?}, image: {:?}, source_crop: {:?}",
                 self.target,
@@ -547,9 +547,9 @@ impl EvaluationContext {
 impl ExpectVal {
     fn resolve(&self, c: &EvaluationContext) -> Option<AspectRatio> {
         match *self {
-            ExpectVal::Canvas => c.result.map(|r| r.get_box(BoxTarget::CurrentCanvas)).ok(),
-            ExpectVal::Image => c.result.map(|r| r.get_box(BoxTarget::CurrentImage)).ok(),
-            ExpectVal::SourceCrop => c.result.map(|r| r.get_source_crop()).ok(),
+            ExpectVal::Canvas => c.result.as_ref().map(|r| r.get_box(BoxTarget::CurrentCanvas)).ok(),
+            ExpectVal::Image => c.result.as_ref().map(|r| r.get_box(BoxTarget::CurrentImage)).ok(),
+            ExpectVal::SourceCrop => c.result.as_ref().map(|r| r.get_source_crop()).ok(),
             ExpectVal::Source => Some(c.source),
             ExpectVal::Target => Some(c.target),
             ExpectVal::Val(v) => Some(v),
@@ -598,11 +598,11 @@ impl Expect {
     fn is_true(&self, c: &EvaluationContext) -> bool {
         match self.simplify(c) {
             SimplifiedExpect::Canvas { against, expect } => c
-                .result
+                .result.as_ref()
                 .map(|r| expect.matches(r.get_box(BoxTarget::CurrentCanvas).cmp_size(&against)))
                 .unwrap_or(false),
             SimplifiedExpect::Image { against, expect } => c
-                .result
+                .result.as_ref()
                 .map(|r| expect.matches(r.get_box(BoxTarget::CurrentImage).cmp_size(&against)))
                 .unwrap_or(false),
             SimplifiedExpect::Source { against, expect } => {
@@ -1179,7 +1179,7 @@ where
                     self.failures.len(),
                     &failures_truncated
                 );
-                for &(k, v) in self.failures.iter().take(display_limit) {
+                for (k, v) in self.failures.iter().take(display_limit) {
                     w!(
                         "({},{}) produced {:?}, violating {:?}\n",
                         k.source.width(),
@@ -1267,7 +1267,7 @@ where
                 }
 
                 if self.failures.len() < self.truncate_failures {
-                    self.failures.push((ctx, *e));
+                    self.failures.push((ctx.clone(), *e));
                 }
             }
         }
